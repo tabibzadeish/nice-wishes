@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тёплые слова ✨</title>
+<style>
+  :root {
+    --pink-50:  #fff0f6;
+    --pink-100: #ffe0ec;
+    --pink-200: #ffc6dc;
+    --pink-300: #ffa3c5;
+    --pink-400: #ff7eae;
+    --pink-500: #ff5497;
+    --pink-700: #c2185b;
+    --text:    #5a2a45;
+    --shadow:  0 10px 30px rgba(255, 84, 151, 0.25);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+    background: linear-gradient(135deg,
+      #ffe0ec 0%,
+      #ffc6dc 35%,
+      #ffa3c5 65%,
+      #ffd1e3 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow-x: hidden;
+  }
+
+  /* floating hearts background */
+  .hearts {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .heart {
+    position: absolute;
+    font-size: 22px;
+    opacity: 0;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: 1;
+    will-change: transform, opacity;
+  }
+
+  /* четыре варианта траектории — нежно плывут в разные стороны */
+  @keyframes driftA {
+    0%   { transform: translate(0, 110vh)  rotate(-6deg) scale(0.85); opacity: 0; }
+    15%  { opacity: 0.55; }
+    50%  { transform: translate(40px,  50vh)  rotate(6deg)  scale(1);    opacity: 0.65; }
+    85%  { opacity: 0.55; }
+    100% { transform: translate(-30px, -15vh) rotate(-4deg) scale(1.1);  opacity: 0; }
+  }
+  @keyframes driftB {
+    0%   { transform: translate(0, 110vh)  rotate(4deg)  scale(0.9);  opacity: 0; }
+    15%  { opacity: 0.55; }
+    50%  { transform: translate(-50px, 55vh) rotate(-8deg) scale(1.05); opacity: 0.7; }
+    85%  { opacity: 0.5; }
+    100% { transform: translate(60px, -10vh) rotate(8deg)  scale(1.15); opacity: 0; }
+  }
+  @keyframes driftC {
+    0%   { transform: translate(0, 110vh)  rotate(0)     scale(0.8);  opacity: 0; }
+    20%  { opacity: 0.5; }
+    50%  { transform: translate(20px, 45vh) rotate(10deg)  scale(1.05); opacity: 0.6; }
+    100% { transform: translate(-40px, -15vh) rotate(-6deg) scale(1);    opacity: 0; }
+  }
+  @keyframes driftD {
+    0%   { transform: translate(0, 110vh)  rotate(-3deg) scale(0.9); opacity: 0; }
+    25%  { opacity: 0.55; }
+    50%  { transform: translate(-30px, 50vh) rotate(4deg)  scale(1);   opacity: 0.65; }
+    100% { transform: translate(30px, -12vh) rotate(-2deg) scale(1.12); opacity: 0; }
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 32px;
+    padding: 40px 32px;
+    max-width: 560px;
+    width: 100%;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    text-align: center;
+  }
+
+  /* экраны */
+  .screen {
+    display: none;
+    animation: fadeIn 0.4s ease both;
+  }
+  .screen.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .back-link {
+    background: none;
+    border: none;
+    color: var(--pink-700);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 14px;
+    opacity: 0.8;
+  }
+  .back-link:hover { opacity: 1; }
+
+  .selected-name {
+    font-size: 13px;
+    color: var(--pink-500);
+    margin: 0 0 18px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .selected-name b { color: var(--pink-700); }
+
+  h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--pink-700);
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    margin: 0 0 28px;
+    font-size: 15px;
+    color: var(--pink-500);
+    opacity: 0.9;
+  }
+
+  .daily {
+    background: linear-gradient(135deg, var(--pink-100), var(--pink-200));
+    border-radius: 20px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    border: 1px dashed var(--pink-300);
+  }
+
+  .names-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--pink-700);
+    margin-bottom: 10px;
+    font-weight: 600;
+    text-align: left;
+  }
+  .names {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 22px;
+    justify-content: center;
+  }
+  .chip {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 9px 18px;
+    border-radius: 999px;
+    border: 2px solid var(--pink-200);
+    background: white;
+    color: var(--pink-700);
+    cursor: pointer;
+    transition: transform 0.15s, background 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s;
+  }
+  .chip:hover {
+    transform: translateY(-2px);
+    background: var(--pink-50);
+  }
+  .chip.active {
+    background: linear-gradient(135deg, var(--pink-400), var(--pink-500));
+    color: white;
+    border-color: var(--pink-500);
+    box-shadow: 0 6px 16px rgba(255, 84, 151, 0.35);
+  }
+  .daily-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--pink-700);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .daily-text {
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--text);
+    font-style: italic;
+  }
+
+  .message-box {
+    min-height: 140px;
+    padding: 28px 24px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #ffffff, var(--pink-50));
+    border: 2px solid var(--pink-200);
+    font-size: 20px;
+    line-height: 1.55;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), opacity 0.25s;
+    margin-bottom: 24px;
+  }
+  .message-box.pop {
+    transform: scale(1.04);
+  }
+  .message-box.fade {
+    opacity: 0;
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 14px 26px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--pink-400), var(--pink-500));
+    color: white;
+    box-shadow: 0 6px 18px rgba(255, 84, 151, 0.4);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(255, 84, 151, 0.5);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .btn-secondary {
+    background: white;
+    color: var(--pink-700);
+    border: 2px solid var(--pink-200);
+  }
+  .btn-secondary:hover {
+    background: var(--pink-50);
+    transform: translateY(-2px);
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: var(--pink-500);
+    color: white;
+    padding: 12px 22px;
+    border-radius: 999px;
+    font-size: 14px;
+    box-shadow: var(--shadow);
+    transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+    z-index: 10;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  footer {
+    margin-top: 22px;
+    font-size: 12px;
+    color: var(--pink-500);
+    opacity: 0.7;
+  }
+</style>
+</head>
+<body>
+
+<div class="hearts" id="hearts"></div>
+
+<div class="container">
+
+  <!-- Экран 1: выбор имени -->
+  <div class="screen active" id="screenPick">
+    <h1>Тёплые слова ✨</h1>
+    <p class="subtitle">Для кого сегодня доброе слово? 💗</p>
+
+    <div class="names-label">Выбери имя 💌</div>
+    <div class="names" id="names">
+      <button class="chip" data-name="Таня">🤍 Таня</button>
+      <button class="chip" data-name="Аня">⭐ Аня</button>
+      <button class="chip" data-name="Катя">☀️ Катя</button>
+      <button class="chip" data-name="Яна">🪐 Яна</button>
+      <button class="chip" data-name="Лиза Щац">✨ Лиза Щац</button>
+      <button class="chip" data-name="Лиза Коробова">🌷 Лиза Коробова</button>
+      <button class="chip" data-name="Настя">🕊️ Настя</button>
+      <button class="chip" data-name="Аделина">🎨 Аделина</button>
+      <button class="chip" data-name="Диана">🐰 Диана</button>
+      <button class="chip" data-name="Лера">🌬️ Лера</button>
+    </div>
+
+    <footer>сделано с любовью 💌</footer>
+  </div>
+
+  <!-- Экран 2: пожелания -->
+  <div class="screen" id="screenWishes">
+    <button class="back-link" id="backBtn">← Сменить имя</button>
+
+    <h1>Тёплые слова ✨</h1>
+    <p class="selected-name">для <b id="nameLabel">…</b> 💗</p>
+
+    <div class="daily">
+      <div class="daily-label">☀️ Пожелание дня</div>
+      <div class="daily-text" id="dailyText">…</div>
+    </div>
+
+    <div class="message-box" id="messageBox">
+      🌸
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" id="newBtn">✨ Новый комплимент</button>
+      <button class="btn-secondary" id="saveBtn">💌 Сохранить как картинку</button>
+    </div>
+
+    <footer>сделано с любовью 💌</footer>
+  </div>
+
+</div>
+
+<!-- скрытый canvas для генерации картинки -->
+<canvas id="cardCanvas" width="1080" height="1080" style="display:none"></canvas>
+
+<script>
+  const compliments = [
+    "{name}, ты делаешь команду сильнее одним своим присутствием 💗",
+    "{name}, с тобой даже понедельники становятся теплее ☀️",
+    "{name}, твои идеи всегда вдохновляют — спасибо, что делишься ими ✨",
+    "{name}, ты замечаешь то, что другие пропускают. Это супер-сила 🌟",
+    "Работать рядом с тобой, {name}, — настоящее удовольствие 🌸",
+    "{name}, твоё спокойствие в стрессовых ситуациях бесценно 🕊️",
+    "{name}, ты умеешь объяснять сложное так, что всё становится ясно 💡",
+    "{name}, спасибо, что ты всегда поддерживаешь — это очень ценно 🤍",
+    "{name}, твой юмор делает рабочий день светлее 😊",
+    "{name}, ты невероятно надёжный человек. На тебя всегда можно положиться 🌷",
+    "{name}, твоя внимательность к деталям — это настоящее искусство 🎨",
+    "{name}, ты вдохновляешь становиться лучше каждый день 💫",
+    "{name}, у тебя удивительная способность слышать других 🌺",
+    "{name}, ты приносишь столько света в наш коллектив ☀️",
+    "{name}, спасибо за твою доброту — её всегда так не хватает 💝",
+    "{name}, ты невероятно талантливый человек, не забывай об этом 🌟",
+    "С тобой, {name}, легко и комфортно — это редкий дар 🌼",
+    "{name}, твоё трудолюбие восхищает 💪",
+    "{name}, ты делаешь нашу работу не просто работой, а чем-то большим ✨",
+    "{name}, твоя улыбка способна спасти любой созвон 🌈",
+    "{name}, ты потрясающе справляешься, даже когда кажется иначе 💗",
+    "{name}, твой профессионализм виден во всём, что ты делаешь 🌸",
+    "{name}, спасибо, что ты есть в нашей команде 🤍",
+    "{name} — то самое 'секретное оружие' нашего проекта 🚀",
+    "{name}, твоя энергия заражает в самом хорошем смысле ⚡",
+    "{name}, ты умеешь превращать рутину в что-то интересное 🌷",
+    "{name}, твоя честность — это то, что я в тебе очень ценю 💎",
+    "{name} делает то, что должно быть сделано — без шума и пафоса 🌟",
+    "С тобой, {name}, не страшны никакие дедлайны 💪💗",
+    "{name} — пример того, каким должен быть классный коллега 🌺"
+  ];
+
+  // Личные комплименты — у каждой свой набор. Обращение «ты», без {name}.
+  const personalCompliments = {
+    "Таня": [
+      "Ты как тёплое одеяло для всего HR-отдела — рядом с тобой так спокойно 🤍",
+      "Твоё тепло — оно настоящее, его чувствуешь сразу, с первой минуты 💗",
+      "Ты умеешь делать офис домом — и это самое доброе, что можно сделать для людей 🏡🌷",
+      "Рядом с тобой хочется выдохнуть и сказать «как хорошо, что ты есть» 💗",
+      "Ты слышишь людей очень бережно — будто держишь их слова в ладонях 🤲",
+      "Твоя яркость не слепит, а согревает — как утреннее солнце 🌅",
+      "Если бы у заботы было лицо, оно было бы похоже на твоё 💗",
+      "Ты светишь мягко и ровно — и от этого рядом с тобой так уютно ✨",
+      "Рядом с тобой люди распускаются, как цветы у тёплого окна 🌷",
+      "Ты держишь команду на нежности — и это самая прочная опора 🤍",
+      "В тебе одновременно живут и сила, и мягкость — это очень красиво 💗",
+      "К тебе хочется приходить — и с тревогой, и просто за теплом 🌸",
+      "Спасибо, что ты есть. Без тебя было бы заметно холоднее 🌟",
+      "Ты согреваешь каждого — даже когда сама устала. Береги себя 💗",
+      "Ты — сердце нашего HR. Тёплое, живое, бьющееся за всех 💓"
+    ],
+    "Аня": [
+      "Ты умеешь так много, и при этом остаёшься такой родной — это редкое сочетание 🤍",
+      "В твоих руках всё становится тёплым и живым — даже самые обычные дела ✨",
+      "Звёздная — но не далёкая. Близкая, своя, родная звезда ⭐",
+      "К тебе идут не потому, что ты «всё умеешь», а потому что рядом с тобой не страшно 💗",
+      "У тебя талант делать сложное мягко — и это волшебство 💫",
+      "Ты светишь — и рядом с тобой как-то само собой светлее 🌠",
+      "Ты столько всего держишь — пусть и тебя кто-нибудь сегодня бережно подержит 🤍",
+      "Ты делаешь невозможное так спокойно, будто это самое обычное на свете 🌟",
+      "Мастерица — слово хорошее, но самое тёплое в тебе — не умения, а ты сама ✨",
+      "Ты столько всего можешь, и при этом совсем не давишь этим — это очень дорого 💗",
+      "В тебе нет ни капли высокомерия, только тепло и свет — и это бесценно 🌸",
+      "За что бы ты ни взялась — получается красиво и с душой 💫",
+      "Ты звёздная тихо — и от этого ещё нежнее ⭐",
+      "Иногда хочется просто смотреть, как ты что-то делаешь — так спокойно становится 🤍",
+      "Ты — та самая тихая магия, на которой держится столько хорошего ✨"
+    ],
+    "Катя": [
+      "Ты как тёплый солнечный луч — заходишь, и сразу становится светлее ☀️",
+      "В тебе столько мягкого света, что хочется немного погреться рядом 🌞",
+      "Ты танцуешь с лучиками — и нас всех потихоньку зовёшь в этот танец 💃✨",
+      "С тобой даже пасмурный день становится немного золотым 🌻",
+      "Твоя улыбка такая тёплая, что её хочется забрать с собой 😊",
+      "Ты умеешь радоваться так нежно, что это передаётся каждому рядом 💗",
+      "В тебе живёт ласковое лето — даже когда за окном холодно 🌼",
+      "Кажется, у тебя внутри маленькое тёплое солнышко ☀️💛",
+      "После встречи с тобой настроение само становится мягче и светлее 🌈",
+      "Твоя лёгкость — это нежный талант. Светить и при этом не уставать — это дар ✨",
+      "Рядом с тобой просто хорошо — и этого уже так много 🌷",
+      "Ты приносишь тепло одним своим появлением — даже не стараясь 💗",
+      "Солнечная — и при этом очень добрая. Самое тёплое сочетание 🌞🤍",
+      "Ты умеешь видеть хорошее — и эта способность очень нежная 🌸",
+      "Спасибо, что согреваешь нас своим тихим светом — это бесценный подарок ☀️💗"
+    ],
+    "Яна": [
+      "Ты знаешь все планеты — и наша маленькая галактика рядом с тобой спокойнее 🪐",
+      "В тебе есть тихая, мягкая глубина — будто звёздное небо в ясную ночь 🌌",
+      "Ты — наш человек со звёзд, и нам очень повезло, что ты выбрала именно нас ✨",
+      "Твоя любознательность — нежная, тёплая, без напора 💫",
+      "Ты замечаешь то, что вне нашей орбиты — и приносишь это с такой мягкостью 🌠",
+      "С тобой можно говорить о маленьком — и оно становится большим и красивым 🪐",
+      "Ты — космос: спокойная снаружи, бесконечно нежная внутри 🌌",
+      "У тебя ум, который обнимает, а не давит — это очень редко 🤍",
+      "Ты видишь порядок там, где другие путаются — и делишься этим так бережно ⭐",
+      "В тебе есть что-то от тихого вечернего наблюдения за звёздами 🔭🌙",
+      "С тобой хочется задавать вопросы — потому что ты отвечаешь по-доброму 🌟",
+      "Твоя любознательность — мягко согревающая, как тёплый плед и книжка 📖💗",
+      "Ты знаешь так много, и при этом совсем не делаешь из этого выставку 🪐",
+      "С тобой команда становится не только умнее, но и спокойнее 🌌",
+      "Ты — наша тихая звезда. Не громкая, но очень настоящая ⭐✨"
+    ],
+    "Лиза Щац": [
+      "Ты красивая не только внешне — у тебя красиво внутри, и это видно ✨",
+      "Ты приходишь — и задачи становятся не страшными, а тёплыми и решаемыми 🌸",
+      "С тобой рядом хочется выдохнуть и сказать: «всё будет хорошо» 💗",
+      "Ты — радость в самом нежном смысле этого слова, разлитая на всех 💗",
+      "В тебе соединилось столько хорошего сразу — красота, ум, доброта 🌸",
+      "Когда ты появляешься, в воздухе становится немного теплее и светлее 🎀",
+      "Ты умеешь делать сложное мягким — это очень редкий талант ✨",
+      "С тобой хочется быть рядом — потому что рядом с тобой по-доброму 💫",
+      "Ты как тёплый летний день: и светло, и легко, и хочется задержаться 🌞💗",
+      "Твоя энергия — мягкая, греющая. От неё не устаёшь, а наоборот, оживаешь 🌟",
+      "Рядом с тобой как-то само собой исчезают сомнения 🤍",
+      "Радостная, светлая, родная — всё это про тебя одновременно ✨",
+      "Ты умеешь быть и серьёзной, и нежной — и это очень красивое сочетание 🌷",
+      "С тобой даже понедельник дышит мягче 💗",
+      "Ты — наша Лиза-солнышко, и без тебя было бы заметно тише и темнее 💛"
+    ],
+    "Лиза Коробова": [
+      "Ты как нежный букет: смотришь — и просто становится тепло на душе 💐",
+      "В тебе столько цветочного — мягкости, света, тихой красоты 🌷",
+      "Ты талантливая, и при этом такая бережная — это самое нежное сочетание ✨",
+      "С тобой как в маленьком тихом саду: спокойно, светло, всё растёт 🌸",
+      "Твои идеи распускаются нежно — каждая в свой собственный момент 🌺",
+      "Ты умеешь делать красиво — и эта красота всегда добрая 🎨",
+      "В тебе есть весенняя лёгкость — даже когда за окном холодно 🌷❄️",
+      "Ты талантливая совсем без шума — и от этого ещё дороже 💛",
+      "С тобой задачи становятся не только сделанными, но и красивыми 🌸",
+      "Ты — тихий и очень нежный талант. Из тех, что обнимают, а не громко звучат ✨",
+      "У тебя редкое чувство меры и тепла — это видно во всём 🌼",
+      "Ты как полевые цветы: тихо, нежно, и от этого невероятно красиво 🌾💗",
+      "Твоя мягкость — настоящая, тёплая, живая. Береги её 🌷",
+      "Спасибо, что приносишь в команду эту тихую цветочную нежность 💐",
+      "Ты — талантливая, цветочная, родная. Очень нежное сочетание 💗"
+    ],
+    "Настя": [
+      "Ты — будущий самый бережный психолог. Это видно уже сейчас 🌷",
+      "В тебе столько нежности, что хочется её беречь и беречь 🤍",
+      "Ты умеешь слушать так, как умеют слышать самые тёплые люди на свете 💗",
+      "С тобой можно молчать — и это уже самое нежное общение 🕊️",
+      "Ты замечаешь чувства людей раньше них самих — и делаешь это очень бережно ✨",
+      "Твоя мягкость — это тихая, тёплая сила 🌸",
+      "Ты — тот человек, к которому хочется прийти, когда тяжело. И это огромный дар 💗",
+      "В тебе живёт редкая, очень тёплая бережность к людям 🌷",
+      "Ты будешь тем психологом, к которому будут возвращаться годами — и это правда 🌟",
+      "Спасибо, что рядом с тобой можно быть собой — без правок, без объяснений 🤍",
+      "Ты слышишь не слова, а тепло за ними. И это уже искусство 💫",
+      "Твоя нежность греет — даже на расстоянии 🌼",
+      "Ты умеешь быть рядом так мягко, что хочется задержаться подольше ✨",
+      "В тебе чувствуется тихое призвание — оно видно в каждой мелочи 🌷",
+      "Ты — один из самых нежных людей. Береги это в себе, пожалуйста 💗"
+    ],
+    "Аделина": [
+      "Ты — наша Зендея: красивая, спокойная, очень тёплая ✨",
+      "Богиня искусств — но самая нежная из возможных 🎨🌷",
+      "В тебе столько мягкого стиля — он есть даже в том, как ты молчишь 💫",
+      "Ты делаешь красиво не напоказ, а потому что иначе у тебя не получается 🌸",
+      "У тебя нежный вкус — и в работе, и в людях, и в мелочах ✨",
+      "Ты из тех, рядом с кем хочется быть чуть аккуратнее со словами — в хорошем смысле 🌟",
+      "Творчество — твоя стихия, и в каждой твоей работе чувствуется тепло 🎨",
+      "Ты — человек-вдохновение, очень тихий и очень настоящий 💗",
+      "Где ты — там сразу становится немного красивее и нежнее 🌸",
+      "Твой взгляд на вещи — это уже искусство. Доброе, мягкое искусство ✨",
+      "Ты умеешь превращать обычное в красивое — и делаешь это так бережно 🎭🌟",
+      "Богиня — слово громкое, но в тебе оно звучит мягко и точно 💫",
+      "Ты светишь по-особенному — нежно, со вкусом, без шума ✨",
+      "Рядом с тобой даже самые обычные мелочи становятся красивыми 🖼️🌷",
+      "Спасибо, что приносишь в нашу жизнь эту мягкую красоту 🌟💗"
+    ],
+    "Диана": [
+      "Ты — наш зайчик, и от одного этого слова становится теплее 🐰💗",
+      "Укротительница йоги — и одновременно самая нежная душа в комнате 🧘‍♀️🌸",
+      "В тебе есть та самая тихая сила, которая бывает у людей в равновесии 🌿",
+      "Ты умеешь быть мягкой и собранной одновременно — это очень красиво 💫",
+      "Рядом с тобой как-то само собой становится спокойнее дышать 🕊️",
+      "Ты — наш маленький островок тишины и нежности 🌊🤍",
+      "Твоя гибкость — не только в йоге. Ты бережная и в общении, и во всём 🌸",
+      "Ты приносишь в команду тихое «всё будет хорошо» — и это бесценно 💗",
+      "Зайчик — потому что нежная, добрая, тёплая. Самое уютное прозвище 🐰",
+      "В тебе есть внутренняя тишина, в которой хочется немного побыть 🌿",
+      "Ты умеешь не торопиться — и рядом с тобой тоже хочется замедлиться ✨",
+      "Йога научила тебя дышать — а ты учишь этому всех нас, тихо и нежно 🧘‍♀️",
+      "Рядом с тобой не хочется быть резкой — рядом с тобой всё становится мягче 🌷",
+      "С тобой даже кофе пьётся медленнее и вкуснее ☕💗",
+      "Спасибо, что приносишь эту бережную, тёплую энергию. Её очень не хватает 🤍"
+    ],
+    "Лера": [
+      "Ты — лёгкий, тёплый воздух. С тобой свободно дышится 🌬️",
+      "Победительница — но в самом нежном смысле: ты светишься, когда у тебя получается 🏆💗",
+      "В тебе столько живой энергии — она не утомляет, а тихо греет ✨",
+      "Ты идёшь к цели мягко, но уверенно — и в этом столько красоты 🌸",
+      "С тобой как-то светло и легко — и это очень нежный комплимент ✨",
+      "Ты как свежий весенний ветер: пришла — и всё ожило, нежно и быстро 🌬️💗",
+      "У тебя редкое качество — побеждать и при этом тепло радоваться другим 🌟",
+      "Ты двигаешься по жизни так, что хочется идти рядом — спокойно, в ногу 🌿",
+      "В тебе живёт мягкий, светлый характер победительницы — без капли резкости 🏆💫",
+      "Ты — человек, рядом с которым становится теплее и веселее 💗",
+      "Ты доказываешь делом, и при этом остаёшься такой тёплой — это очень дорого 🌷",
+      "С тобой даже скучная задача становится чуть-чуть праздником 🌟",
+      "Твоя энергия — нежная, как утренний бриз 🌬️",
+      "Рядом с тобой команда сама собой становится дружнее и теплее 💗",
+      "Победительница не громко, а тихо — и от этого ещё красивее 🏆✨"
+    ]
+  };
+
+  const dailyWishes = [
+    "Пусть сегодняшний день принесёт тебе маленькое, но настоящее счастье 🌸",
+    "Желаю, чтобы все встречи прошли легко, а кофе был именно таким, как ты любишь ☕💗",
+    "Пусть сегодня случится что-то хорошее, чего ты совсем не ждёшь ✨",
+    "Желаю мягкого дня, тёплых разговоров и спокойного вечера 🤍",
+    "Пусть всё задуманное сегодня получится — а лишнее само отпадёт 🌷",
+    "Желаю, чтобы хотя бы один момент сегодня заставил тебя улыбнуться 😊",
+    "Пусть сегодня тебя окружают только приятные люди и удобные стулья 💗",
+    "Желаю лёгкости, вдохновения и вкусного обеда 🌟",
+    "Пусть этот день будет добрее, чем ты ожидаешь 🌈",
+    "Желаю тебе сил, ясной головы и капельки везения сегодня 💫",
+    "Пусть всё сложное решится само, а простое порадует 🌼",
+    "Желаю, чтобы сегодня ты услышала что-то очень приятное о себе 💝",
+    "Пусть рабочий день закончится с чувством 'я молодец' ✨",
+    "Желаю тёплого солнца, тёплых слов и тёплого чая 🍵💗",
+    "Пусть сегодня всё будет на твоей стороне 🌸",
+    "Пусть сегодня случится та самая мелочь, ради которой стоило встать с кровати 🌷",
+    "Желаю, чтобы внутри было тихо, а вокруг — по-доброму 🤍",
+    "Пусть тебе сегодня везёт на зелёный свет — и в светофорах, и в людях 💚",
+    "Желаю, чтобы день прошёл без 'надо срочно' и с большим количеством 'как хорошо' ☁️",
+    "Пусть кто-то сегодня скажет тебе спасибо — искренне и вовремя 💗",
+    "Желаю, чтобы рядом оказались только бережные люди 🌸",
+    "Пусть всё, что тревожило вчера, сегодня станет немного меньше 🍃",
+    "Желаю тебе вкусного завтрака, спокойного дня и уютного вечера 🥐💗",
+    "Пусть сегодня хватит сил на главное, а на лишнее — не хватит 💫",
+    "Желаю, чтобы день удивил тебя в хорошем смысле ✨",
+    "Пусть твои усилия сегодня заметят — и оценят так, как ты заслуживаешь 🌟",
+    "Желаю, чтобы сегодня было место и для работы, и для себя 🌼",
+    "Пусть какая-то новость сегодня порадует тебя совершенно неожиданно 💌",
+    "Желаю тебе сегодня внутреннего 'всё ок', даже если снаружи суета 🕊️",
+    "Пусть твой день будет наполнен маленькими 'о, как приятно' 💝",
+    "Желаю тебе мягкого утра, продуктивного дня и тёплого 'до завтра' 🌙",
+    "Пусть сегодня всё получится с первого раза — особенно то, что важно 🌸",
+    "Желаю, чтобы ты сегодня собой гордилась — даже за маленькое 💪💗",
+    "Пусть рядом сегодня будут только те, с кем легко дышится 🌬️🤍",
+    "Желаю тебе хорошего настроения без причины — просто потому, что ты есть ✨"
+  ];
+
+  const messageBox = document.getElementById('messageBox');
+  const newBtn     = document.getElementById('newBtn');
+  const dailyText  = document.getElementById('dailyText');
+  const namesBox   = document.getElementById('names');
+  const nameLabel  = document.getElementById('nameLabel');
+  const backBtn    = document.getElementById('backBtn');
+  const screenPick   = document.getElementById('screenPick');
+  const screenWishes = document.getElementById('screenWishes');
+
+  // ── Screens ───────────────────────────────────────────────────
+  function showScreen(el) {
+    [screenPick, screenWishes].forEach(s => s.classList.remove('active'));
+    // перезапускаем анимацию
+    void el.offsetWidth;
+    el.classList.add('active');
+  }
+
+  // ── Selected colleague ────────────────────────────────────────
+  let selectedName = null;
+  const chips = namesBox.querySelectorAll('.chip');
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      selectedName = chip.dataset.name;
+      nameLabel.textContent = selectedName;
+      lastIdx = -1; // чтобы первый комплимент был свежий для нового имени
+      showScreen(screenWishes);
+      showNew();
+    });
+  });
+
+  backBtn.addEventListener('click', () => {
+    showScreen(screenPick);
+  });
+
+  // ── Daily wish (deterministic per date) ───────────────────────
+  function dailyIndex(arr) {
+    const d = new Date();
+    const key = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+    return key % arr.length;
+  }
+  dailyText.textContent = dailyWishes[dailyIndex(dailyWishes)];
+
+  // ── Random compliment ─────────────────────────────────────────
+  let lastIdx = -1;
+  function poolFor(name) {
+    const personal = personalCompliments[name] || [];
+    const shared = compliments.map(c => c.replace(/\{name\}/g, name));
+    return personal.concat(shared);
+  }
+  function pickCompliment() {
+    if (!selectedName) return '🌸';
+    const pool = poolFor(selectedName);
+    let i;
+    do { i = Math.floor(Math.random() * pool.length); }
+    while (i === lastIdx && pool.length > 1);
+    lastIdx = i;
+    return pool[i];
+  }
+
+  function showNew() {
+    messageBox.classList.add('fade');
+    setTimeout(() => {
+      messageBox.textContent = pickCompliment();
+      messageBox.classList.remove('fade');
+      messageBox.classList.add('pop');
+      setTimeout(() => messageBox.classList.remove('pop'), 350);
+    }, 220);
+  }
+
+  newBtn.addEventListener('click', showNew);
+
+  // ── Floating hearts ───────────────────────────────────────────
+  const heartsLayer = document.getElementById('hearts');
+  const heartChars  = ['💗', '💕', '🌸', '✨', '🌷', '🤍', '💖', '🌺', '🎀', '💐'];
+  const drifts      = ['driftA', 'driftB', 'driftC', 'driftD'];
+  function spawnHeart() {
+    const h = document.createElement('div');
+    h.className = 'heart';
+    h.textContent = heartChars[Math.floor(Math.random() * heartChars.length)];
+    h.style.left = Math.random() * 100 + 'vw';
+    h.style.fontSize = (18 + Math.random() * 22) + 'px';
+    // случайная траектория и медленная длительность для нежности
+    const drift = drifts[Math.floor(Math.random() * drifts.length)];
+    const dur = 16 + Math.random() * 14; // 16–30 сек, плавно
+    h.style.animationName = drift;
+    h.style.animationDuration = dur + 's';
+    heartsLayer.appendChild(h);
+    setTimeout(() => h.remove(), dur * 1000);
+  }
+  // initial sprinkle + steady stream
+  for (let i = 0; i < 8; i++) {
+    setTimeout(spawnHeart, i * 500);
+  }
+  setInterval(spawnHeart, 1300);
+
+  // ── Save as image (1080×1080 PNG) ─────────────────────────────
+  const saveBtn = document.getElementById('saveBtn');
+  const canvas  = document.getElementById('cardCanvas');
+
+  // Перенос текста по словам с заданной шириной
+  function wrapText(ctx, text, maxWidth) {
+    const words = text.split(' ');
+    const lines = [];
+    let line = '';
+    for (const w of words) {
+      const test = line ? line + ' ' + w : w;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = w;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  function renderCard() {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    // фон — розовый градиент (как у сайта)
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0,    '#fff0f6');
+    grad.addColorStop(0.5,  '#ffc6dc');
+    grad.addColorStop(1,    '#ffe0ec');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // декоративные сердечки по углам
+    ctx.font = '64px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+    ctx.globalAlpha = 0.45;
+    ctx.fillText('💗', 60, 120);
+    ctx.fillText('🌸', W - 130, 130);
+    ctx.fillText('🌷', 70, H - 80);
+    ctx.fillText('✨', W - 130, H - 80);
+    ctx.globalAlpha = 1;
+
+    // «для <Имя> 💗» сверху
+    ctx.fillStyle = '#c2185b';
+    ctx.font = '600 44px "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`для ${selectedName} 💗`, W / 2, 200);
+
+    // комплимент по центру, с переносами
+    ctx.fillStyle = '#5a2a45';
+    ctx.font = '600 56px "Segoe UI", sans-serif';
+    const text = messageBox.textContent.trim();
+    const lines = wrapText(ctx, text, W - 200);
+    const lineHeight = 80;
+    const totalH = lines.length * lineHeight;
+    let y = (H - totalH) / 2 + lineHeight / 2;
+    for (const ln of lines) {
+      ctx.fillText(ln, W / 2, y);
+      y += lineHeight;
+    }
+
+    // подпись снизу
+    ctx.fillStyle = '#ff5497';
+    ctx.font = '500 32px "Segoe UI", sans-serif';
+    ctx.fillText('тёплые слова ✨', W / 2, H - 100);
+  }
+
+  saveBtn.addEventListener('click', () => {
+    if (!selectedName) return;
+    renderCard();
+    const link = document.createElement('a');
+    const safeName = selectedName.replace(/\s+/g, '_');
+    link.download = `тёплые-слова-${safeName}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+
+</script>
+
+</body>
+</html>
