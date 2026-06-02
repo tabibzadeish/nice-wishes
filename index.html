@@ -305,9 +305,9 @@
   <!-- Экран 1: выбор имени -->
   <div class="screen active" id="screenPick">
     <h1>Тёплые слова ✨</h1>
-    <p class="subtitle">Для кого сегодня доброе слово? 💗</p>
+    <p class="subtitle">Тёплое слово специально для тебя 💗</p>
 
-    <div class="names-label">Выбери имя 💌</div>
+    <div class="names-label">Выбери себя 💌</div>
     <div class="names" id="names">
       <button class="chip" data-name="Таня">🤍 Таня</button>
       <button class="chip" data-name="Аня">⭐ Аня</button>
@@ -329,7 +329,7 @@
     <button class="back-link" id="backBtn">← Сменить имя</button>
 
     <h1>Тёплые слова ✨</h1>
-    <p class="selected-name">для <b id="nameLabel">…</b> 💗</p>
+    <p class="selected-name"><b id="nameLabel">…</b>, это про тебя 💗</p>
 
     <div class="daily">
       <div class="daily-label">☀️ Пожелание дня</div>
@@ -737,11 +737,11 @@
     ctx.fillText('✨', W - 130, H - 80);
     ctx.globalAlpha = 1;
 
-    // «для <Имя> 💗» сверху
+    // «<Имя>, это про тебя 💗» сверху
     ctx.fillStyle = '#c2185b';
     ctx.font = '600 44px "Segoe UI", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`для ${selectedName} 💗`, W / 2, 200);
+    ctx.fillText(`${selectedName}, это про тебя 💗`, W / 2, 200);
 
     // комплимент по центру, с переносами
     ctx.fillStyle = '#5a2a45';
