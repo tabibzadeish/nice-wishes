@@ -23,12 +23,7 @@
     margin: 0;
     min-height: 100vh;
     font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
-    background: linear-gradient(135deg,
-      #ffe0ec 0%,
-      #ffc6dc 35%,
-      #ffa3c5 65%,
-      #ffd1e3 100%);
-    background-attachment: fixed;
+    /* фон через ::before, чтобы можно было плавно менять под коллегу */
     color: var(--text);
     display: flex;
     flex-direction: column;
@@ -36,7 +31,39 @@
     justify-content: center;
     padding: 24px;
     overflow-x: hidden;
+    position: relative;
   }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(135deg,
+      #ffe0ec 0%, #ffc6dc 35%, #ffa3c5 65%, #ffd1e3 100%);
+    transition: opacity 0.8s ease;
+  }
+  /* персональные градиенты — наслаиваются поверх через ::after */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.8s ease, background 0.8s ease;
+    background: linear-gradient(135deg, #ffe0ec, #ffc6dc);
+  }
+  body.themed::after { opacity: 1; }
+
+  body.theme-tanya::after    { background: linear-gradient(135deg, #fff0f6 0%, #ffd6c4 50%, #ffc6dc 100%); }
+  body.theme-anya::after     { background: linear-gradient(135deg, #ffe8d6 0%, #ffd1dc 50%, #ffc6e8 100%); }
+  body.theme-katya::after    { background: linear-gradient(135deg, #fff4c2 0%, #ffd9b0 45%, #ffb3c8 100%); }
+  body.theme-yana::after     { background: linear-gradient(135deg, #e0c3fc 0%, #f5b8e0 50%, #ffc6dc 100%); }
+  body.theme-liza-shats::after { background: linear-gradient(135deg, #ffd1e8 0%, #ff9ec7 50%, #ff7eae 100%); }
+  body.theme-liza-korobova::after { background: linear-gradient(135deg, #e8d5f5 0%, #f5c6e0 50%, #ffd1dc 100%); }
+  body.theme-nastya::after   { background: linear-gradient(135deg, #fff5f7 0%, #ffe0e8 50%, #ffd0dc 100%); }
+  body.theme-adelina::after  { background: linear-gradient(135deg, #ffd9b8 0%, #ffc6c6 50%, #ffb3d1 100%); }
+  body.theme-diana::after    { background: linear-gradient(135deg, #d4f5e0 0%, #f0d9e8 50%, #ffd1dc 100%); }
+  body.theme-lera::after     { background: linear-gradient(135deg, #c8f0e8 0%, #d8e8f5 50%, #ffd1dc 100%); }
 
   /* floating hearts background */
   .hearts {
@@ -219,14 +246,23 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), opacity 0.25s;
+    transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
     margin-bottom: 24px;
+    text-align: center;
   }
   .message-box.pop {
     transform: scale(1.04);
   }
-  .message-box.fade {
+  /* каждое слово появляется по очереди — нежно, снизу вверх */
+  .message-box .word {
+    display: inline-block;
     opacity: 0;
+    transform: translateY(8px);
+    animation: wordIn 0.55s ease forwards;
+    margin-right: 0.28em;
+  }
+  @keyframes wordIn {
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .actions {
@@ -616,6 +652,32 @@
     el.classList.add('active');
   }
 
+  // ── Темы (персональный градиент под коллегу) ──────────────────
+  const themes = {
+    "Таня": "theme-tanya",
+    "Аня": "theme-anya",
+    "Катя": "theme-katya",
+    "Яна": "theme-yana",
+    "Лиза Щац": "theme-liza-shats",
+    "Лиза Коробова": "theme-liza-korobova",
+    "Настя": "theme-nastya",
+    "Аделина": "theme-adelina",
+    "Диана": "theme-diana",
+    "Лера": "theme-lera",
+  };
+  function applyTheme(name) {
+    const body = document.body;
+    // снимаем все theme-* классы
+    body.classList.forEach(c => {
+      if (c.startsWith('theme-')) body.classList.remove(c);
+    });
+    if (name && themes[name]) {
+      body.classList.add('themed', themes[name]);
+    } else {
+      body.classList.remove('themed');
+    }
+  }
+
   // ── Selected colleague ────────────────────────────────────────
   let selectedName = null;
   const chips = namesBox.querySelectorAll('.chip');
@@ -624,12 +686,14 @@
       selectedName = chip.dataset.name;
       nameLabel.textContent = selectedName;
       lastIdx = -1; // чтобы первый комплимент был свежий для нового имени
+      applyTheme(selectedName);
       showScreen(screenWishes);
       showNew();
     });
   });
 
   backBtn.addEventListener('click', () => {
+    applyTheme(null);
     showScreen(screenPick);
   });
 
@@ -640,6 +704,28 @@
     return key % arr.length;
   }
   dailyText.textContent = dailyWishes[dailyIndex(dailyWishes)];
+
+  // ── Личные ссылки ?for=Имя ────────────────────────────────────
+  // Можно открыть сайт сразу для конкретной коллеги:
+  //   ?for=Таня · ?for=Лиза%20Щац · ?for=лиза+коробова (регистр и пробелы не важны)
+  function nameFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    let raw = params.get('for') || params.get('для');
+    if (!raw) return null;
+    // нормализация: пробелы, регистр, дефисы
+    const norm = s => s.trim().toLowerCase().replace(/[-_+]/g, ' ').replace(/\s+/g, ' ');
+    const target = norm(raw);
+    const allNames = Array.from(chips).map(c => c.dataset.name);
+    return allNames.find(n => norm(n) === target) || null;
+  }
+  const urlName = nameFromUrl();
+  if (urlName) {
+    selectedName = urlName;
+    nameLabel.textContent = urlName;
+    applyTheme(urlName);
+    showScreen(screenWishes);
+    showNew();
+  }
 
   // ── Random compliment ─────────────────────────────────────────
   let lastIdx = -1;
@@ -659,13 +745,23 @@
   }
 
   function showNew() {
-    messageBox.classList.add('fade');
-    setTimeout(() => {
-      messageBox.textContent = pickCompliment();
-      messageBox.classList.remove('fade');
-      messageBox.classList.add('pop');
-      setTimeout(() => messageBox.classList.remove('pop'), 350);
-    }, 220);
+    const text = pickCompliment();
+    // сохраняем оригинал, чтобы PNG-карточка могла его прочесть
+    messageBox.dataset.text = text;
+    // разбиваем на слова и анимируем каждое со своей задержкой
+    messageBox.innerHTML = '';
+    const words = text.split(/\s+/);
+    // итоговая задержка не должна растягиваться слишком сильно
+    const step = Math.max(35, Math.min(80, 600 / words.length));
+    words.forEach((w, i) => {
+      const span = document.createElement('span');
+      span.className = 'word';
+      span.textContent = w;
+      span.style.animationDelay = (i * step) + 'ms';
+      messageBox.appendChild(span);
+    });
+    messageBox.classList.add('pop');
+    setTimeout(() => messageBox.classList.remove('pop'), 350);
   }
 
   newBtn.addEventListener('click', showNew);
@@ -746,7 +842,7 @@
     // комплимент по центру, с переносами
     ctx.fillStyle = '#5a2a45';
     ctx.font = '600 56px "Segoe UI", sans-serif';
-    const text = messageBox.textContent.trim();
+    const text = (messageBox.dataset.text || messageBox.textContent).trim();
     const lines = wrapText(ctx, text, W - 200);
     const lineHeight = 80;
     const totalH = lines.length * lineHeight;
